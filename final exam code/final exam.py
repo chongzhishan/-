@@ -14,10 +14,12 @@ import itertools
 
 os.chdir(r"D:\machine learning final project")
 
-all_file_name = os.listdir()
+all_file_name = os.listdir(r"D:\machine learning final project\original data")
 
+
+## bug too fix
 def load_data(file_name):
-    df = pd.read_csv(r".\{}\eeg.csv".format(file_name))
+    df = pd.read_csv(r"D:\machine learning final project/original data/{}/eeg.csv".format(file_name))
 
     # because:there is duplicate data
     df = df[::2]
@@ -131,10 +133,19 @@ def data_window_2(path , name ):
     output = output.reshape(int(current/5),5,5)
     
     return output
+
+# train model
+def model_train_test(model):
+    model.fit(pd.DataFrame(x_train),pd.DataFrame(y_train))
+    y_pred = model.predict(pd.DataFrame(x_test))
+    print(accuracy_score(pd.DataFrame(y_test), pd.DataFrame(y_pred)))
+    print(classification_report(pd.DataFrame(y_test),pd.DataFrame(y_pred)))
+    plot_confusion_matrix(model,pd.DataFrame(x_test),pd.DataFrame(y_test))
+    
 # In[]
 for name in all_file_name:
     time_step,sensor_1,sensor_2,sensor_3,sensor_4,sensor_5 = load_data(name)
-    #auto_sublpot(time_step,sensor_1,sensor_2,sensor_3,sensor_4,sensor_5,name)
+    auto_sublpot(time_step,sensor_1,sensor_2,sensor_3,sensor_4,sensor_5,name)
     
     # feature enginerring
     fc_sensor_1 = feature_concentration(sensor_1)
@@ -173,12 +184,15 @@ from keras.models import load_model
 from keras.callbacks import ModelCheckpoint
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score,classification_report,plot_confusion_matrix
 from sklearn.model_selection import cross_val_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
-
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import svm
+from sklearn.preprocessing import StandardScaler
 # In[]
 # data for lstm
 pre_data = [] 
@@ -214,61 +228,30 @@ print(accuracy_score(y_test, test_preds))
 x_train,x_test,y_train,y_test = train_test_split( data ,label ,test_size = 0.3)
 # In[]
 
-decision_tree = DecisionTreeClassifier(random_state=0)
-
-decision_tree.fit(x_train, y_train)
-
-predictions = decision_tree.predict(x_test)
-print(predictions[:5])
-
-
-print(accuracy_score(y_test, predictions))
-#x = cross_val_score(clf, x_train, y_train, cv=10)
 # In[]
-
+decision_tree = DecisionTreeClassifier(random_state=0)
+model_train_test(decision_tree)
+# In[]
 random_forest = RandomForestClassifier(max_depth=100, random_state=0)
-random_forest.fit(x_train, y_train)
-
-predictions = random_forest.predict(x_test)
-print(predictions[:5])
-print(accuracy_score(y_test, predictions))
+model_train_test(random_forest)
 # In[]
 
 xgboost = XGBClassifier(eta=0.3 ,max_depth=16)
-xgboost.fit(pd.DataFrame(x_train), pd.DataFrame(y_train))
-
-predictions = xgboost.predict(pd.DataFrame(x_test))
-print(predictions[:5])
-print(accuracy_score(pd.DataFrame(y_test), pd.DataFrame(predictions)))
+model_train_test(xgboost)
 # In[]
-from sklearn.linear_model import LogisticRegression
-logistic = LogisticRegression()
-logistic.fit(pd.DataFrame(x_train), pd.DataFrame(y_train))
 
-predictions = logistic.predict(pd.DataFrame(x_test))
-print(predictions[:5])
-print(accuracy_score(pd.DataFrame(y_test), pd.DataFrame(predictions)))
-print("yes")
+logistregression = LogisticRegression()
+model_train_test(logistregression)
 # In[]
-from sklearn.neighbors import KNeighborsClassifier
 knclassification = KNeighborsClassifier(n_neighbors=3)
-knclassification.fit(pd.DataFrame(x_train), pd.DataFrame(y_train))
-
-predictions = knclassification.predict(pd.DataFrame(x_test))
-print(predictions[:5])
-print(accuracy_score(pd.DataFrame(y_test), pd.DataFrame(predictions)))
+model_train_test(knclassification)
 # In[]
-from sklearn import svm
+
 svm_clf = svm.SVC()
-svm_clf.fit(pd.DataFrame(x_train), pd.DataFrame(y_train))
-
-predictions = svm_clf.predict(pd.DataFrame(x_test))
-print(predictions[:5])
-print(accuracy_score(pd.DataFrame(y_test), pd.DataFrame(predictions)))
-
-
+model_train_test(svm_clf)
 # In[]
-# Get the unique values of 'B' column
-print(df.ch1.unique().tolist())
+scaler = StandardScaler()
+x_train = scaler.fit_transform(x_train)
+x_test = scaler.transform(x_test)
 
-.describe().transpose()
+
